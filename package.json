@@ -1,0 +1,29 @@
+{
+  "name": "twiz-client-request",
+  "version": "1.0.0",
+  "description": "XMLHttpRequest module for twiz-client",
+  "main": "src/request.js",
+  "scripts": {
+    "browserify": "./node_modules/browserify/bin/cmd.js test/request.js -o test/request_bundle.js",
+    "watch": "watchify test/request.js -o test/request_bundle.js --debug -v",
+    "buld": "npm run browserify && npm run watch",
+    "test-browser": "./node_modules/browserify/bin/cmd.js test/request.js | ./node_modules/smokestack/bin/smokestack.js -b firefox | tap-spec",
+    "server":"node test/server/server.js &" ,
+    "test":"./test.sh"
+  },
+  "author": "github.com/gits2501",
+  "license": "MIT",
+  "dependencies": {
+    "twiz-client-utils": "file:../twiz-client-utils"
+  },
+  "testling": {
+    "files": "test/request.js"
+  },
+  "devDependencies": {
+    "browserify": "^16.1.1",
+    "smokestack": "^3.4.1",
+    "tap-spec": "^4.1.1",
+    "tape": "^4.9.0",
+    "watchify": "^3.11.0"
+  }
+}
