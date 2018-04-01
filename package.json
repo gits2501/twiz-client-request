@@ -14,7 +14,7 @@
   "author": "github.com/gits2501",
   "license": "MIT",
   "dependencies": {
-    "twiz-client-utils": "*"
+    "twiz-client-utils": ">=1.0.0"
   },
   "testling": {
     "files": "test/request.js"
