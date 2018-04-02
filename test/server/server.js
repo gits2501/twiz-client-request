@@ -4,16 +4,18 @@ var path;
 var headerName = 'Content-Type';
 var data;
 
-var server = http.createServer(function(req,res){
+var server = http.createServer(function(req,res){       // server mock
+
      path = url.parse(req.url, true).path;
      path = path.replace('/','');
-     console.log('path: ',path) 
      data = '';
+
      if(path !== 'CORS')            
         if(preflight(req, res)) return;
      
      req.on('data', function(d){ data = d.toString('utf8')});
-     req.on('end', function(){ console.log('request ended')
+
+     req.on('end', function(){
          
          switch(path){                                  // mirror back data from request (path convert to type)
             case  'application-json':                                
@@ -37,19 +39,17 @@ var server = http.createServer(function(req,res){
               send(res, data, headerName, 'application/json') 
             break;
             default:
-              res.end('no  content-type  specified');
+              res.end('no content-type  specified');
        
        }      
     })
 })
 
 function preflight(request, response){
-    console.log('in allow Origin')
      var preflight = false
      if (request.method == "OPTIONS"){  
 
         preflight = true;
-        console.log("preflight request with OPTIONS");
         response.setHeader("Access-Control-Allow-Headers","content-type , authorization");
         response.setHeader("Access-Control-Allow-Origin", "*");
 
@@ -58,17 +58,11 @@ function preflight(request, response){
       }
       else {
         response.setHeader("Access-Control-Allow-Origin","*"); // Other (no preflight) can have just 
-        console.log('not preflight')
       }
 
-      console.log("URL source: " + request.url); console.log("url parsed:", url.parse(request.url, true).query)
       var data= '';
       request.on('data', function(d){data += d});
 
-      request.on('end', function(){ console.log("REQ ended")
-         console.log("Sent BODY: ", data)
-         console.log("resp headers: " + response.headers) 
-      })
       
       request.on('error', function(err){
         console.log("Error: "+ err);
@@ -77,7 +71,6 @@ function preflight(request, response){
 }
 
 function send(res, data , headerName, headerValue){
-   console.log('in send', 'data:', data)
    res.setHeader(headerName, headerValue);
    res.end(data, 'utf-8')
 }

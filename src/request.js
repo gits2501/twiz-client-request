@@ -123,7 +123,7 @@ var request = (function(){
        //console.log('content-type: ', contentType)
        switch(contentType){              // parse data as indicated in contentType header 
            case "application/json":   
-              try{ console.log('content-type is application/json')
+              try{ // console.log('content-type is application/json')
                  if(this.parse) temp = JSON.parse(this.request.responseText); // only if parse flag is set
                  else temp = this.request.responseText;
               }
@@ -163,7 +163,7 @@ var request = (function(){
     };
 
     request.setBody = function(){ // sets Content-Type encoding and encode the body of a request
-               console.log("In setBody")
+               //console.log("In setBody")
           if(this.method === 'GET') throw this.CustomError('methodMustBePOST'); // don't set body on GET method
          
           if(!this.encoding){       

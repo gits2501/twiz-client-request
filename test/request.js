@@ -52,7 +52,7 @@ test('request',function(t){
      test('applicatiion/x-www-url-form encode support', function(t){ 
         t.plan(2);
         
-        var testIt = function(err, receivedData){ console.log('receivedData:', receivedData) 
+        var testIt = function(err, receivedData){ 
            t.notOk(err, 'no errors')
            t.deepEquals(receivedData, data, 'supports form endcoded')
         }
@@ -73,7 +73,7 @@ test('request',function(t){
      test('application/json support',function(t){
         t.plan(2);
         
-        var testIt = function (err,receivedData){ console.log('receivedData:', receivedData) 
+        var testIt = function (err,receivedData){ 
             t.notOk(err, 'no errors');
             t.deepEqual(data, receivedData, 'supports json');
          }
@@ -107,7 +107,7 @@ test('request',function(t){
         
     })    
     
-    test('text/plain support',function(t){  console.log('in text-html')
+    test('text/plain support',function(t){  
         t.plan(2);
 
         var testIt = function(err, receivedData){ 
@@ -147,7 +147,7 @@ test('request',function(t){
    t.end()
   })
   
-  test('On unsuccesfull requests (status not 200)', function(t){
+  test('On unsuccesfull requests (status code not 200)', function(t){
      t.plan(2);
 
      var testIt = function(err, receivedData){

@@ -6,10 +6,10 @@
   "scripts": {
     "browserify": "./node_modules/browserify/bin/cmd.js test/request.js -o test/request_bundle.js",
     "watch": "watchify test/request.js -o test/request_bundle.js --debug -v",
-    "buld": "npm run browserify && npm run watch",
+    "build": "npm run browserify && npm run watch",
     "test-browser": "./node_modules/browserify/bin/cmd.js test/request.js | ./node_modules/smokestack/bin/smokestack.js -b firefox | tap-spec",
     "server":"node test/server/server.js &" ,
-    "test":"./test.sh"
+    "test":"test/test.sh"
   },
   "author": "github.com/gits2501",
   "license": "MIT",
