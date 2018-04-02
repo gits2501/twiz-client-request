@@ -1,11 +1,12 @@
 var request = require('../src/request');
 var test = require('tape');
-var formEncode = require('twiz-client-utils').formEncode
+var formEncode = require('twiz-client-utils').formEncode;
+
 
 test('request',function(t){
    var options = {}
    
-   test('Needs url', function(t){
+   test('Needs url', function(t){     // we need url or else error is trown
       t.plan(1);
       
       t.throws(request.bind(null, options),
@@ -15,7 +16,7 @@ test('request',function(t){
    })
    
     
-   test('Needs callback function', function(t){
+   test('Needs callback function', function(t){  // callback needed or error is throws
       t.plan(1)
 
       options.url = 'http://localhost:5001';
@@ -24,9 +25,9 @@ test('request',function(t){
                'when no callback throw error');
    })
 
-  test('HTTP compliance',function(t){
+  test('HTTP compliance',function(t){           // test some http good practices
    
-    test('body must be sent with POST method', function(t){
+    test('body must be sent with POST method', function(t){  
        t.plan(1);
        var data =  { lotrQuote: "A new power is rising. Its victory is at hand."}; 
        options.method   = '' 
@@ -49,12 +50,12 @@ test('request',function(t){
   test('Content-Type support', function(t){
      
      
-     test('applicatiion/x-www-url-form encode support', function(t){ 
+     test('applicatiion/x-www-url-form encode support', function(t){ // test application/x-www .. support
         t.plan(2);
         
-        var testIt = function(err, receivedData){ 
-           t.notOk(err, 'no errors')
-           t.deepEquals(receivedData, data, 'supports form endcoded')
+        var testIt = function(res){ 
+           t.notOk(res.error, 'no errors')
+           t.deepEquals(res.data, data, 'supports form endcoded')
         }
         var data = { 
            lotrQuote: 'How can that be your decision?! Are you not part of this world?',
@@ -70,18 +71,18 @@ test('request',function(t){
      })
 
            
-     test('application/json support',function(t){
+     test('application/json support',function(t){                 
         t.plan(2);
         
-        var testIt = function (err,receivedData){ 
-            t.notOk(err, 'no errors');
-            t.deepEqual(data, receivedData, 'supports json');
+        var testIt = function (res){ 
+            t.notOk(res.error, 'no errors');
+            t.deepEqual(data, res.data, 'supports json');
          }
         var data = {
           lotrQuote:'And if you return.. You will not be the same.' 
         }
         options.method = 'POST'
-        options.callback = function(err, receivedData) { testIt(err,receivedData) }
+        options.callback = function(res) { testIt(res) }
         options.url = 'http://localhost:5001/application-json'
         options.body = data;
         options.parse = true;
@@ -92,9 +93,9 @@ test('request',function(t){
     test('text/html support',function(t){ 
         t.plan(2);
 
-        var testIt = function(err, receivedData){ 
-           t.notOk(err, 'no errors');
-           t.equals('<p>'+data+'</p>', receivedData, 'supports text/html')
+        var testIt = function(res){ 
+           t.notOk(res.error, 'no errors');
+           t.equals('<p>'+data+'</p>', res.data, 'supports text/html')
         }
         
         var data = 'The Ents cannot hold the storm.';
@@ -110,9 +111,9 @@ test('request',function(t){
     test('text/plain support',function(t){  
         t.plan(2);
 
-        var testIt = function(err, receivedData){ 
-           t.notOk(err, 'no errors');
-           t.equals(data, receivedData, 'supports text/plain')}
+        var testIt = function(res){ 
+           t.notOk(res.error, 'no errors');
+           t.equals(data, res.data, 'supports text/plain')}
         
         var data = 'The Ents cannot hold the storm.';
         options.method   = 'POST';
@@ -127,9 +128,9 @@ test('request',function(t){
     test('application/xml', function(t){
         t.plan(2);
 
-        var testIt = function(err, receivedData){
-           t.notOk(err, 'no errors');
-           t.assert(receivedData.nodeType,' supports application/xml');  
+        var testIt = function(res){
+           t.notOk(res.error, 'no errors');
+           t.assert(res.data.nodeType,' supports application/xml');  
         }
         var data = '<note><to>Frodo</to><from>Bilbo</from><heading>Birthday</heading><body>Dont forget me this weekend!</body></note>';
 
@@ -150,9 +151,9 @@ test('request',function(t){
   test('On unsuccesfull requests (status code not 200)', function(t){
      t.plan(2);
 
-     var testIt = function(err, receivedData){
-        t.notOk(receivedData, 'no success');
-        t.notEquals(err.statusCode,'200', 'status code is not 200');
+     var testIt = function(res){
+        t.notOk(res.data, 'no success');
+        t.notEquals(res.error.statusCode,'200', 'status code is not 200');
         
      }
      var data = { lotrQuote:'How can we get to Mordor?' }
@@ -164,7 +165,28 @@ test('request',function(t){
      request(options)
  
   })
-
+ 
+  test('Add query params', function(t){
+    t.plan(1);
+    var testIt = function(res){ 
+       t.deepEquals(options.queryParams, res.data, 'query params added')
+    }
+   
+    options.method = 'GET';
+    options.url = 'http://localhost:5001/queryParams';
+    options.callback = testIt;
+    options.queryParams = {
+       blueWizard1: 'Alatar/Morinehtar',
+       blueWizard2: 'Palando/Romestamo',
+       brownWizard: 'Radagast/Aiwendil',
+       grayWizard:  'Gandalf/Olorin',
+       whiteWizard: 'Saruman/Kurunir' 
+    }
+    options.body = ''
+    options.parse = true; // if response is json parse it.
+    request(options)
+  
+   }) 
 
   t.end()
 })

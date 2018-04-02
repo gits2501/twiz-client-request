@@ -1,5 +1,6 @@
-var CustomError = require('twiz-client-utils').CustomError;
-var formEncode  = require('twiz-client-utils').formEncode;
+var CustomError     = require('twiz-client-utils').CustomError;
+var formEncode      = require('twiz-client-utils').formEncode;
+var throwAsyncError = require('twiz-client-utils').throwAsyncError;
 
 var request = (function(){ 
     var request = {};
@@ -12,8 +13,10 @@ var request = (function(){
       callbackNotProvided:"Callback function was not provided.",
       notJSON:            "Received data not in JSON format",
       encodingNotSupported:"Encoding you provided is not supported",
-      noContentType:       "Failed to get content-type header from response. Possible CORS restrictions.",
-      methodMustBePOST:    "If request has body, method must be POST"
+      noContentType:       "Failed to get content-type header from response. Possible CORS restrictions or header missing.",
+      methodMustBePOST:    "If request has body, method must be POST",
+      chunkedResponseWarning: 'Stream is consumed chunk by chunk in xhr.onprogress(..) callback'
+      
     });
 
     request.initRequest = function(args){ // Propertie names, in args object, that this function supports are:
@@ -49,7 +52,13 @@ var request = (function(){
             case "beforeSend":
               this.beforeSend = temp // For instance, if we need to set additonal request specific headers 
                                      // this.beforeSend is invoked before sending the request, but afther open()
-                                     // is called. Here we have created new property.
+                                     // is called. 
+            break;
+            case "chunked":
+              this.chunked = temp
+            break;
+            case "reject":           // For promise (async) error thrrowing
+              this.reject = temp;
             break;
          }    
       }
@@ -67,8 +76,9 @@ var request = (function(){
         try{
             return new XMLHttpRequest(); // standard
         }
-        catch(e){  console.log(e);
-            try{ 
+        catch(e){ 
+            try{                                    // Linter will throw 'no-undef' error for ActiveXObject
+                                                    // since it cannot presume older browser environment
                 return new ActiveXObject("Microsoft.XMLHTTP");  // IE specific ...
             }
             catch(e){
@@ -96,7 +106,8 @@ var request = (function(){
       this.request.onreadystatechange = function(){
           
          if(this.request.readyState === 4){           // check that request is completed
-              if(alreadyCalled) throw this.CustomError('cbAlreadyCalled'); // callback is run only once
+              if(alreadyCalled) this.throwAsyncError(this.CustomError('cbAlreadyCalled')); // callback is run 
+                                                                                           // only once
                 
               alreadyCalled = true;
 
@@ -109,18 +120,25 @@ var request = (function(){
       }.bind(this); // Async functions lose -this- context because they start executing when functions that 
                     // invoked them already finished their execution. Here we pass whatever "this" references 
                     // in the moment addListener() is invoked. Meaning, "this" will repesent each 
-                    // instance of request, see return function below. 
+                    // instance of request. 
     };
+   
+    request.throwAsyncError = throwAsyncError;
 
     request.invokeCallback = function (statusCode, contentType, callback){
-       var error; 
+       var err; 
        var data;
        var temp;
+                        
+       if(this.chunked){                                                    
+           this.throwAsyncError(this.CustomError('chunkedResponseWarning'))
+           return;
+       };
 
-       if(!contentType) throw this.CustomError('noContentType');
-       contentType = contentType.split(';')[0]; // get just type , in case there is charset specified 
+       if(!contentType) throw this.throwAsyncError(this.CustomError('noContentType'));
+       contentType = contentType.split(';')[0];            // get just type , in case there is charset specified 
 
-       //console.log('content-type: ', contentType)
+       // console.log('Content-Type: ', contentType);
        switch(contentType){              // parse data as indicated in contentType header 
            case "application/json":   
               try{ // console.log('content-type is application/json')
@@ -128,7 +146,7 @@ var request = (function(){
                  else temp = this.request.responseText;
               }
               catch(e){
-                  throw this.CustomError('notJSON');  // if parsing failed note it
+                  this.throwAsyncError(this.CustomError('notJSON'));  // if parsing failed note it
               }
            break;   
            case "application/xml":
@@ -136,7 +154,7 @@ var request = (function(){
            break;
            case "application/x-www-url-formencoded":  
               temp =  {}; //console.log('responseText:', this.request.responseText)
-              this.request.responseText.trim().split("&").forEach(function(el, i){ // split on &
+              this.request.responseText.trim().split("&").forEach(function(el){ // split on &
                    
                   var pairs = el.split('=');                    
                   var name   = decodeURIComponent(pairs[0].replace(/\+/g,' '));   // decode key
@@ -144,20 +162,27 @@ var request = (function(){
                   temp[name] = value;                        // add key and value
               }, temp)
            break;
-           default:
+           default: 
               temp = this.request.responseText; // text/html , text/css and others are treated as text
        }
 
        if(statusCode !== 200){             // on error create error object
-          error = { 'status': statusCode, 'statusText': this.request.statusText, 'data': temp }
+          err = { 
+            'statusCode': statusCode , 
+            'statusText': this.request.statusText, 
+            'data': temp                   
+          }
        }
        else data = temp;                   // no error, data is object we got from payload
  
-       
-       callback(error, data)               // invoke callback
+       callback({               // invoke callback
+          'error': err,
+          'data': data,
+          'xhr' : this.request  // set reference to xhr request/response
+       })              
 
     }
-
+        
     request.setHeader = function(header, value){     // set the request header 
        this.request.setRequestHeader(header, value);  
     };
@@ -202,7 +227,7 @@ var request = (function(){
        
     };    
    
-    return function(args){  // modul returns this function as API
+    return function(args){  // can be plain function call or can be called with 'new' keyward
 
       var r = Object.create(request); // behavior delegation link
      
@@ -211,8 +236,8 @@ var request = (function(){
           return;                    // if not , then return the object that indirectly, through closures 
       }                              // have access to prototype chain of request API. That is it has acess to 
                                      // an instance of request API (here it is "r").
-       			
-      return phantomHead = { initRequest: r.initRequest.bind(r) } // "borrow" method from instance, bind it to instance
+
+      return { initRequest: r.initRequest.bind(r) } // "borrow" method from instance, bind it to instance
     }
 
 })()

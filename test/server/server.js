@@ -5,18 +5,20 @@ var headerName = 'Content-Type';
 var data;
 
 var server = http.createServer(function(req,res){       // server mock
-
-     path = url.parse(req.url, true).path;
-     path = path.replace('/','');
+     url_        = url.parse(req.url, true); 
+     path        = url_.pathname;
+     path        = path.replace('/','');
+     queryParams = url_.query;
+      
+     
      data = '';
-
      if(path !== 'CORS')            
         if(preflight(req, res)) return;
      
      req.on('data', function(d){ data = d.toString('utf8')});
 
      req.on('end', function(){
-         
+         if(path)
          switch(path){                                  // mirror back data from request (path convert to type)
             case  'application-json':                                
               send(res, data,  headerName,  path.replace('-','/')); 
@@ -35,13 +37,18 @@ var server = http.createServer(function(req,res){       // server mock
             break;
             case 'error':                              // provoke error back in client
               res.statusCode    = '400';
-              res.statusMessage = 'One does not simply walk into Mordor'
+              res.statusMessage = 'One does not simply walk into Mordor';
               send(res, data, headerName, 'application/json') 
             break;
+            case 'queryParams':
+              send(res, JSON.stringify(queryParams), headerName, 'application/json');  // mirror back received query params    
+            break; 
             default:
               res.end('no content-type  specified');
        
-       }      
+         }
+    
+       
     })
 })
 
