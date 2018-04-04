@@ -1,6 +1,7 @@
 var request = require('../src/request');
 var test = require('tape');
-var formEncode = require('twiz-client-utils').formEncode
+var formEncode = require('twiz-client-utils').formEncode;
+
 
 test('request',function(t){
    var options = {}
@@ -164,7 +165,28 @@ test('request',function(t){
      request(options)
  
   })
-
+ 
+  test('Add query params', function(t){
+    t.plan(1);
+    var testIt = function(err, receivedData){ 
+       t.deepEquals(options.queryParams, receivedData, 'query params added')
+    }
+   
+    options.method = 'GET';
+    options.url = 'http://localhost:5001/queryParams';
+    options.callback = testIt;
+    options.queryParams = {
+       blueWizard1: 'Alatar/Morinehtar',
+       blueWizard2: 'Palando/Romestamo',
+       brownWizard: 'Radagast/Aiwendil',
+       grayWizard:  'Gandalf/Olorin',
+       whiteWizard: 'Saruman/Kurunir' 
+    }
+    options.body = ''
+    options.parse = true; // if response is json parse it.
+    request(options)
+  
+   }) 
 
   t.end()
 })

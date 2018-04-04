@@ -67,8 +67,9 @@ var request = (function(){
         try{
             return new XMLHttpRequest(); // standard
         }
-        catch(e){  console.log(e);
-            try{ 
+        catch(e){ 
+            try{                                    // Linter will throw 'no-undef' error for ActiveXObject
+                                                    // since it cannot presume older browser environment
                 return new ActiveXObject("Microsoft.XMLHTTP");  // IE specific ...
             }
             catch(e){
@@ -136,7 +137,7 @@ var request = (function(){
            break;
            case "application/x-www-url-formencoded":  
               temp =  {}; //console.log('responseText:', this.request.responseText)
-              this.request.responseText.trim().split("&").forEach(function(el, i){ // split on &
+              this.request.responseText.trim().split("&").forEach(function(el){ // split on &
                    
                   var pairs = el.split('=');                    
                   var name   = decodeURIComponent(pairs[0].replace(/\+/g,' '));   // decode key
@@ -211,8 +212,8 @@ var request = (function(){
           return;                    // if not , then return the object that indirectly, through closures 
       }                              // have access to prototype chain of request API. That is it has acess to 
                                      // an instance of request API (here it is "r").
-       			
-      return phantomHead = { initRequest: r.initRequest.bind(r) } // "borrow" method from instance, bind it to instance
+
+      return { initRequest: r.initRequest.bind(r) } // "borrow" method from instance, bind it to instance
     }
 
 })()

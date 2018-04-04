@@ -4,23 +4,22 @@
   "description": "XMLHttpRequest module for twiz-client",
   "main": "src/request.js",
   "scripts": {
+    "lint": "eslint src/request.js",
     "browserify": "./node_modules/browserify/bin/cmd.js test/request.js -o test/request_bundle.js",
     "watch": "watchify test/request.js -o test/request_bundle.js --debug -v",
     "build": "npm run browserify && npm run watch",
     "test-browser": "./node_modules/browserify/bin/cmd.js test/request.js | ./node_modules/smokestack/bin/smokestack.js -b firefox | tap-spec",
-    "server":"node test/server/server.js &" ,
-    "test":"test/test.sh"
+    "server": "node test/server/server.js &",
+    "test": "test/test.sh"
   },
   "author": "github.com/gits2501",
   "license": "MIT",
   "dependencies": {
     "twiz-client-utils": ">=1.0.0"
   },
-  "testling": {
-    "files": "test/request.js"
-  },
   "devDependencies": {
     "browserify": "^16.1.1",
+    "eslint": "^4.19.1",
     "smokestack": "^3.4.1",
     "tap-spec": "^4.1.1",
     "tape": "^4.9.0",
